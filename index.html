@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1st Aide Home Care — PCA Master System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">❤</div>
+      <div>
+        <div class="brand-name">1st Aide</div>
+        <div class="brand-sub">Home Care PCA</div>
+      </div>
+    </div>
+    <div class="nav-section-label">MAIN</div>
+    <a class="nav-item active" data-view="dashboard" onclick="showView('dashboard')">
+      <span class="nav-icon">▦</span> Dashboard
+    </a>
+    <a class="nav-item" data-view="active" onclick="showView('active')">
+      <span class="nav-icon">◉</span> Active Members
+      <span class="nav-badge" id="badge-active">0</span>
+    </a>
+    <a class="nav-item" data-view="left" onclick="showView('left')">
+      <span class="nav-icon">◎</span> Left/Dead Members
+      <span class="nav-badge secondary" id="badge-left">0</span>
+    </a>
+    <div class="nav-section-label">TOOLS</div>
+    <a class="nav-item" data-view="import" onclick="showView('import')">
+      <span class="nav-icon">⬆</span> Import Excel / Drive
+    </a>
+    <a class="nav-item" data-view="reports" onclick="showView('reports')">
+      <span class="nav-icon">⊞</span> Reports
+    </a>
+    <a class="nav-item" data-view="auditlog" onclick="showView('auditlog')">
+      <span class="nav-icon">⏱</span> Audit Log
+    </a>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar" id="user-avatar-nav">?</div>
+        <div>
+          <div class="user-name" id="user-name-nav">Guest</div>
+          <div class="user-role" id="user-role-nav">Not logged in</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="openLogin()">Switch User</button>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main id="main-content">
+
+    <!-- TOP BAR -->
+    <header id="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <h1 id="page-title">Dashboard</h1>
+      </div>
+      <div class="topbar-right">
+        <div class="search-wrap" id="global-search-wrap" style="display:none">
+          <input type="text" id="global-search" placeholder="Search members…" oninput="onSearch(this.value)">
+          <span class="search-icon">⌕</span>
+        </div>
+        <button class="btn-primary" id="btn-add-member" style="display:none" onclick="openAddModal()">+ Add Member</button>
+      </div>
+    </header>
+
+    <!-- DASHBOARD VIEW -->
+    <div id="view-dashboard" class="view active">
+      <div class="stats-grid">
+        <div class="stat-card stat-blue">
+          <div class="stat-label">Active Members</div>
+          <div class="stat-value" id="stat-active">0</div>
+          <div class="stat-sub">Total enrolled</div>
+        </div>
+        <div class="stat-card stat-red">
+          <div class="stat-label">Left / Deceased</div>
+          <div class="stat-value" id="stat-left">0</div>
+          <div class="stat-sub">Former members</div>
+        </div>
+        <div class="stat-card stat-orange">
+          <div class="stat-label">Expiring ≤ 30 days</div>
+          <div class="stat-value" id="stat-expiring">0</div>
+          <div class="stat-sub">Auth expiring soon</div>
+        </div>
+        <div class="stat-card stat-green">
+          <div class="stat-label">Total Changes Today</div>
+          <div class="stat-value" id="stat-changes">0</div>
+          <div class="stat-sub">Audit events</div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="dash-card">
+          <div class="card-header">
+            <h3>MLTC Distribution</h3>
+          </div>
+          <div id="chart-mltc" class="chart-area"></div>
+        </div>
+        <div class="dash-card">
+          <div class="card-header">
+            <h3>Hiring Status Breakdown</h3>
+          </div>
+          <div id="chart-hiring" class="chart-area"></div>
+        </div>
+        <div class="dash-card wide">
+          <div class="card-header">
+            <h3>Recent Activity</h3>
+          </div>
+          <div id="recent-activity" class="activity-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVE MEMBERS VIEW -->
+    <div id="view-active" class="view">
+      <div class="filter-bar">
+        <select id="filter-mltc" onchange="applyFilters('active')">
+          <option value="">All MLTC</option>
+        </select>
+        <select id="filter-marketer" onchange="applyFilters('active')">
+          <option value="">All Marketers</option>
+        </select>
+        <select id="filter-hiring" onchange="applyFilters('active')">
+          <option value="">All Status</option>
+        </select>
+        <button class="btn-outline" onclick="clearFilters('active')">Clear</button>
+        <div class="filter-count" id="filter-count-active"></div>
+      </div>
+      <div class="table-wrap">
+        <table id="table-active">
+          <thead>
+            <tr>
+              <th>S.NO</th>
+              <th>Last Name</th>
+              <th>First Name</th>
+              <th>DOB</th>
+              <th>Aide Name</th>
+              <th>Medicaid ID</th>
+              <th>MLTC</th>
+              <th>Contact</th>
+              <th>Start Date</th>
+              <th>Auth Exp</th>
+              <th>Schedule</th>
+              <th>Hrs/Wk</th>
+              <th>Marketer</th>
+              <th>Hiring Status</th>
+              <th>Comment</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-active"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pag-active"></div>
+    </div>
+
+    <!-- LEFT/DEAD MEMBERS VIEW -->
+    <div id="view-left" class="view">
+      <div class="filter-bar">
+        <select id="filter-mltc-left" onchange="applyFilters('left')">
+          <option value="">All MLTC</option>
+        </select>
+        <button class="btn-outline" onclick="clearFilters('left')">Clear</button>
+        <div class="filter-count" id="filter-count-left"></div>
+      </div>
+      <div class="table-wrap">
+        <table id="table-left">
+          <thead>
+            <tr>
+              <th>S.NO</th>
+              <th>Last Name</th>
+              <th>First Name</th>
+              <th>DOB</th>
+              <th>Aide Name</th>
+              <th>MLTC</th>
+              <th>Contact</th>
+              <th>Comment</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-left"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pag-left"></div>
+    </div>
+
+    <!-- IMPORT VIEW -->
+    <div id="view-import" class="view">
+      <div class="import-hero">
+        <div class="import-icon">⬆</div>
+        <h2>Import Data</h2>
+        <p>Load your PCA Master Sheet directly from a local file or Google Sheets URL</p>
+      </div>
+      <div class="import-grid">
+        <div class="import-card">
+          <div class="import-card-icon">📁</div>
+          <h3>Upload Excel File</h3>
+          <p>Drag & drop your .xlsx file or click to browse</p>
+          <div class="drop-zone" id="drop-zone"
+            ondrop="handleDrop(event)" ondragover="event.preventDefault()"
+            onclick="document.getElementById('file-input').click()">
+            <div class="drop-text">Drop .xlsx here or click</div>
+            <div class="drop-sub" id="drop-filename">No file chosen</div>
+          </div>
+          <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileSelect(event)">
+          <button class="btn-primary full-width" onclick="processFile()">Load File</button>
+        </div>
+        <div class="import-card">
+          <div class="import-card-icon">🔗</div>
+          <h3>Google Sheets / Drive Link</h3>
+          <p>Paste a public Google Sheets URL to sync live data</p>
+          <input type="url" id="drive-url" class="text-input" placeholder="https://docs.google.com/spreadsheets/d/…">
+          <div class="info-box">
+            <strong>How to get the CSV export URL:</strong><br>
+            1. Open your Google Sheet<br>
+            2. File → Share → Publish to web<br>
+            3. Select sheet → CSV format<br>
+            4. Copy link & paste above
+          </div>
+          <button class="btn-primary full-width" onclick="loadFromDrive()">Load from Drive</button>
+        </div>
+      </div>
+      <div id="import-log" class="import-log"></div>
+    </div>
+
+    <!-- REPORTS VIEW -->
+    <div id="view-reports" class="view">
+      <div class="reports-grid">
+        <div class="report-card" onclick="generateReport('expiring')">
+          <div class="report-icon">⚠</div>
+          <h3>Expiring Authorizations</h3>
+          <p>Members with auth expiring in the next 30 days</p>
+          <span class="report-badge" id="rpt-expiring-count"></span>
+        </div>
+        <div class="report-card" onclick="generateReport('hiring_pending')">
+          <div class="report-icon">⏳</div>
+          <h3>Hiring Pending</h3>
+          <p>Members with incomplete hiring status</p>
+          <span class="report-badge" id="rpt-hiring-count"></span>
+        </div>
+        <div class="report-card" onclick="generateReport('by_mltc')">
+          <div class="report-icon">🏥</div>
+          <h3>By MLTC Contract</h3>
+          <p>Full member roster grouped by insurance</p>
+        </div>
+        <div class="report-card" onclick="generateReport('by_marketer')">
+          <div class="report-icon">👤</div>
+          <h3>By Marketer</h3>
+          <p>Members grouped by assigned marketer</p>
+        </div>
+        <div class="report-card" onclick="generateReport('full_export')">
+          <div class="report-icon">⬇</div>
+          <h3>Full Export</h3>
+          <p>Download all active members as CSV</p>
+        </div>
+        <div class="report-card" onclick="generateReport('audit_report')">
+          <div class="report-icon">📋</div>
+          <h3>Audit Report</h3>
+          <p>All changes with user & timestamp</p>
+        </div>
+      </div>
+      <div id="report-output" class="report-output" style="display:none">
+        <div class="report-output-header">
+          <h3 id="report-output-title"></h3>
+          <div>
+            <button class="btn-outline" onclick="exportReportCSV()">Export CSV</button>
+            <button class="btn-outline" onclick="document.getElementById('report-output').style.display='none'">✕ Close</button>
+          </div>
+        </div>
+        <div id="report-output-body"></div>
+      </div>
+    </div>
+
+    <!-- AUDIT LOG VIEW -->
+    <div id="view-auditlog" class="view">
+      <div class="filter-bar">
+        <input type="text" id="audit-search" placeholder="Search user, field, value…" class="text-input" oninput="filterAuditLog(this.value)">
+        <select id="audit-user-filter" onchange="filterAuditLog()">
+          <option value="">All Users</option>
+        </select>
+        <button class="btn-outline" onclick="clearAuditFilters()">Clear</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>User</th>
+              <th>Action</th>
+              <th>Member</th>
+              <th>Field</th>
+              <th>Old Value</th>
+              <th>New Value</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-audit"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODALS -->
+<div id="modal-overlay" class="modal-overlay" onclick="closeModals(event)">
+
+  <!-- LOGIN MODAL -->
+  <div id="modal-login" class="modal">
+    <div class="modal-header">
+      <h2>Sign In</h2>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-muted);margin-bottom:1.5rem">Enter your name to start tracking changes with your identity</p>
+      <label class="form-label">Your Name</label>
+      <input type="text" id="login-name" class="text-input" placeholder="e.g. Kohinoor, Sangeeta…" onkeydown="if(event.key==='Enter') doLogin()">
+      <label class="form-label" style="margin-top:1rem">Role</label>
+      <select id="login-role" class="text-input">
+        <option>Admin</option>
+        <option>Marketer</option>
+        <option>Viewer</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="doLogin()">Sign In</button>
+    </div>
+  </div>
+
+  <!-- ADD/EDIT MEMBER MODAL -->
+  <div id="modal-member" class="modal modal-wide">
+    <div class="modal-header">
+      <h2 id="modal-member-title">Add Member</h2>
+      <button class="modal-close" onclick="closeModalMember()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">S.NO</label><input id="f-sno" class="text-input" placeholder="FA1001"></div>
+        <div class="form-group"><label class="form-label">Last Name</label><input id="f-lastname" class="text-input"></div>
+        <div class="form-group"><label class="form-label">First Name</label><input id="f-firstname" class="text-input"></div>
+        <div class="form-group"><label class="form-label">Date of Birth</label><input id="f-dob" type="date" class="text-input"></div>
+        <div class="form-group full"><label class="form-label">Address</label><input id="f-address" class="text-input"></div>
+        <div class="form-group"><label class="form-label">Aide Name</label><input id="f-aide" class="text-input"></div>
+        <div class="form-group"><label class="form-label">Medicaid ID</label><input id="f-medicaid" class="text-input"></div>
+        <div class="form-group"><label class="form-label">MLTC Contract</label><input id="f-mltc" class="text-input"></div>
+        <div class="form-group"><label class="form-label">Contact</label><input id="f-contact" class="text-input"></div>
+        <div class="form-group"><label class="form-label">Start Date</label><input id="f-start" type="date" class="text-input"></div>
+        <div class="form-group"><label class="form-label">Auth Start Date</label><input id="f-auth-start" type="date" class="text-input"></div>
+        <div class="form-group"><label class="form-label">Auth Exp Date</label><input id="f-auth-exp" type="date" class="text-input"></div>
+        <div class="form-group"><label class="form-label">Schedule</label><input id="f-schedule" class="text-input" placeholder="7D*5.5H"></div>
+        <div class="form-group"><label class="form-label">Weekly Hours</label><input id="f-hours" type="number" class="text-input"></div>
+        <div class="form-group"><label class="form-label">ICD-10</label><input id="f-icd" class="text-input"></div>
+        <div class="form-group"><label class="form-label">Marketer</label><input id="f-marketer" class="text-input"></div>
+        <div class="form-group"><label class="form-label">Hiring Status</label><input id="f-hiring" class="text-input"></div>
+        <div class="form-group full"><label class="form-label">Comment</label><textarea id="f-comment" class="text-input" rows="3"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModalMember()">Cancel</button>
+      <button class="btn-primary" onclick="saveMember()">Save Member</button>
+    </div>
+  </div>
+
+  <!-- COMMENT MODAL -->
+  <div id="modal-comment" class="modal">
+    <div class="modal-header">
+      <h2>Comment</h2>
+      <button class="modal-close" onclick="closeModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="comment-member-info" class="comment-member-info"></div>
+      <div id="comment-history" class="comment-history"></div>
+      <textarea id="comment-new" class="text-input" rows="4" placeholder="Add a new comment…"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModals()">Cancel</button>
+      <button class="btn-primary" onclick="saveComment()">Add Comment</button>
+    </div>
+  </div>
+
+  <!-- DELETE CONFIRM MODAL -->
+  <div id="modal-delete" class="modal modal-small">
+    <div class="modal-header">
+      <h2>Confirm Delete</h2>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete <strong id="delete-name"></strong>? This action will be logged.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModals()">Cancel</button>
+      <button class="btn-danger" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
